@@ -1,0 +1,1862 @@
+/* ==========================================================================
+   Clockwork Sanctum: The Living Board — Ankama / Krosmaster Collector HUD
+   Strict Anti-Slop Orthogonal & Rounded Gold-Medallion Architecture
+   Zero polygon clip-path, Zero skewX, Zero neon wireframes, <= 16% Occlusion
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #4fa6e8 0%, #8fd3ff 100%);
+  font-family: 'Trebuchet MS', 'Nunito', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #fff8e8;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game-canvas,
+#canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  z-index: 1;
+  outline: none;
+}
+
+body > canvas,
+#game-canvas > canvas,
+#canvas-container > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   HUD Root & URL Flag Hidden State (?hud=0, ?thumb=1)
+   -------------------------------------------------------------------------- */
+#hud-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 20;
+  font-variant-numeric: tabular-nums;
+}
+
+#hud-root.hud-hidden,
+body.hud-off #hud-root {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+#hud-root > :not(.cs-welcome-screen) {
+  transition: opacity 0.32s ease, visibility 0.32s ease;
+}
+
+#hud-root.is-welcome-open > :not(.cs-welcome-screen) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.hud-interactive {
+  pointer-events: auto;
+}
+
+/* Crisp dark Ankama cartoon text outline helper */
+.cs-outlined-text {
+  text-shadow:
+    0 1.5px 0 #1f150f,
+    0 -1px 0 #1f150f,
+    1.3px 0 0 #1f150f,
+    -1.3px 0 0 #1f150f,
+    1px 1px 0 #1f150f,
+    -1px 1px 0 #1f150f,
+    0 2.5px 4px rgba(18, 12, 8, 0.55);
+}
+
+/* ==========================================================================
+   ZONE 1: TOP-LEFT ACTIVE HERO MEDALLION & HP/AP PILL
+   ========================================================================== */
+.cs-top-left {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  z-index: 24;
+}
+
+.cs-medallion-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  padding: 4.5px;
+  background: linear-gradient(180deg, #ffe285 0%, #e5a93b 48%, #b37318 100%);
+  border: 2.5px solid #261c16;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 250, 214, 0.85),
+    inset 0 -2px 0 rgba(110, 64, 10, 0.7),
+    0 4px 10px rgba(24, 18, 12, 0.42);
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.cs-medallion-well {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #261c16;
+  background: radial-gradient(circle at 50% 36%, #5f7189 0%, #394556 68%, #242c38 100%);
+  box-shadow: inset 0 3px 6px rgba(12, 16, 22, 0.65);
+  overflow: hidden;
+  position: relative;
+}
+
+.cs-medallion-portrait {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  width: 108%;
+  height: 108%;
+  transform: translate(-50%, -50%);
+  display: block;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+.cs-medallion-portrait.is-tome {
+  top: 50%;
+  width: 104%;
+  height: 104%;
+}
+
+.cs-medallion-badge {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 23px;
+  height: 23px;
+  padding: 0 5px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #3c4656 0%, #232a35 100%);
+  border: 2px solid #e5a93b;
+  outline: 1.5px solid #261c16;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+
+.cs-stat-pill-right {
+  margin-left: -14px;
+  padding: 4px 14px 4px 21px;
+  min-width: 132px;
+  height: 49px;
+  border-radius: 0 14px 14px 0;
+  background: linear-gradient(180deg, #4e5a6d 0%, #384251 55%, #2d3643 100%);
+  border: 2.5px solid #e5a93b;
+  outline: 2px solid #261c16;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(18, 22, 28, 0.55),
+    0 4px 10px rgba(24, 18, 12, 0.36);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  z-index: 2;
+}
+
+.cs-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 19px;
+}
+
+.cs-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1.2px 1px rgba(20, 14, 10, 0.65));
+}
+
+.cs-hp-value,
+.cs-hero-name-value {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: #fff6dc;
+  white-space: nowrap;
+}
+
+.cs-ap-value,
+.cs-role-value {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: #6ef2ff;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   ZONE 2: TOP-CENTER WHISPER-COMPACT LEVEL RIBBON & TOAST
+   max-width: 580px so ALL 4 levels fit with 0 "..." truncation!
+   ========================================================================== */
+.cs-top-center {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  z-index: 23;
+  max-width: 580px;
+  width: max-content;
+}
+
+.cs-level-ribbon {
+  height: 28px;
+  max-width: 580px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(67, 78, 95, 0.95) 0%, rgba(43, 51, 64, 0.97) 100%);
+  border: 2px solid #e5a93b;
+  outline: 1.5px solid #261c16;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 190, 0.35),
+    0 3px 9px rgba(20, 15, 10, 0.36);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cs-level-ribbon.is-exit-unlocked {
+  border-color: #ffe270;
+  box-shadow:
+    0 0 12px rgba(255, 212, 74, 0.65),
+    inset 0 1px 0 rgba(255, 248, 210, 0.55);
+}
+
+.cs-ribbon-tag {
+  font-size: 10.5px;
+  font-weight: 900;
+  color: #ffd363;
+  flex-shrink: 0;
+}
+
+.cs-ribbon-sep {
+  color: #d4a24c;
+  font-weight: 800;
+  font-size: 10.5px;
+  flex-shrink: 0;
+}
+
+.cs-ribbon-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff9ec;
+  flex-shrink: 0;
+}
+
+.cs-ribbon-goal {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #dbe8f8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-toast {
+  display: none;
+  max-width: 520px;
+  padding: 5px 13px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #563d28 0%, #3b2819 100%);
+  border: 1.8px solid #f0b94b;
+  outline: 1.5px solid #221710;
+  box-shadow: 0 4px 12px rgba(18, 12, 8, 0.48);
+  font-size: 10.8px;
+  font-weight: 800;
+  color: #fff7e2;
+  text-align: center;
+  line-height: 1.25;
+  pointer-events: none;
+}
+
+.cs-toast.is-visible {
+  display: block;
+}
+
+.cs-toast.tone-hint {
+  background: linear-gradient(180deg, #2d4c63 0%, #1d3344 100%);
+  border-color: #5ce6ff;
+  color: #ecfcff;
+}
+
+.cs-toast.tone-warn {
+  background: linear-gradient(180deg, #6b2e2a 0%, #481d1a 100%);
+  border-color: #ff7a6b;
+  color: #ffece8;
+}
+
+.cs-toast.tone-gold {
+  background: linear-gradient(180deg, #684b1e 0%, #463111 100%);
+  border-color: #ffe070;
+  color: #fff9df;
+}
+
+/* ==========================================================================
+   ZONE 3: TOP-RIGHT SANCTUM TOME MEDALLION, TROPHY & LEVEL SWITCHER
+   ========================================================================== */
+.cs-top-right {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  z-index: 24;
+}
+
+.cs-stat-pill-left {
+  margin-right: -14px;
+  padding: 4px 20px 4px 11px;
+  height: 50px;
+  border-radius: 14px 0 0 14px;
+  background: linear-gradient(180deg, #4e5a6d 0%, #384251 55%, #2d3643 100%);
+  border: 2.5px solid #e5a93b;
+  outline: 2px solid #261c16;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(18, 22, 28, 0.55),
+    0 4px 10px rgba(24, 18, 12, 0.36);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  z-index: 2;
+}
+
+.cs-tr-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  height: 19px;
+}
+
+.cs-trophy-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cs-trophy-text {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #fff6dc;
+  line-height: 1;
+}
+
+.cs-trophy-group.is-complete .cs-trophy-text {
+  color: #ffe26a;
+}
+
+.cs-tr-divider {
+  width: 1.5px;
+  height: 12px;
+  background: rgba(229, 169, 59, 0.48);
+  border-radius: 1px;
+}
+
+.cs-mute-btn {
+  width: 23px;
+  height: 19px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1.5px solid #c99236;
+  background: linear-gradient(180deg, #5d6b80 0%, #394352 100%);
+  color: #fff6df;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1.5px 0 #1f1712;
+  transition: transform 0.08s ease, filter 0.12s ease;
+}
+
+.cs-mute-btn:hover {
+  filter: brightness(1.12);
+}
+
+.cs-mute-btn:active {
+  transform: translateY(1px);
+}
+
+.cs-mute-btn.is-muted {
+  background: linear-gradient(180deg, #5a3838 0%, #3d2424 100%);
+  border-color: #d97264;
+  color: #ffb8b0;
+}
+
+.cs-tr-lvl-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  height: 19px;
+}
+
+.cs-lvl-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #e9c274;
+  margin-right: 1px;
+}
+
+.cs-lvl-pill {
+  width: 20px;
+  height: 17px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1.5px solid #9e7736;
+  background: linear-gradient(180deg, #434f61 0%, #2c3543 100%);
+  color: #e6eef8;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1.5px 0 #1b140f;
+  transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.cs-lvl-pill:hover {
+  border-color: #f4c65d;
+  color: #ffffff;
+}
+
+.cs-lvl-pill.is-active {
+  background: linear-gradient(180deg, #ffe27a 0%, #e5a32c 65%, #bf7a14 100%);
+  border-color: #fff3b0;
+  color: #26180c;
+  text-shadow: 0 1px 0 rgba(255, 250, 220, 0.65);
+  box-shadow: 0 0 7px rgba(255, 206, 78, 0.65), 0 1.5px 0 #1b140f;
+}
+
+/* ==========================================================================
+   ZONE 4 & ZONE 5: COLLECTOR CARDS (HEROES LEFT, GARGOYLES RIGHT)
+   Anchored at bottom: 10px, preserving <= 16% total HUD viewport occlusion
+   ========================================================================== */
+.cs-hero-deck {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  z-index: 24;
+}
+
+.cs-gargoyle-deck {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  z-index: 24;
+}
+
+.cs-collector-card {
+  position: relative;
+  width: 104px;
+  height: 138px;
+  border-radius: 9px;
+  padding: 3px;
+  background: linear-gradient(180deg, #fbe088 0%, #e1a235 46%, #b27118 100%);
+  border: 2px solid #241912;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 215, 0.85),
+    0 5px 12px rgba(20, 14, 9, 0.46);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.14s ease, opacity 0.2s ease;
+}
+
+.cs-collector-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Active Hero Card Glowing Cyan Collector Aura (Exact Master Reference Match) */
+.cs-collector-card.is-selected {
+  transform: translateY(-4px);
+  border-color: #7ef9ff;
+  box-shadow:
+    0 0 0 2px #33f0ff,
+    0 0 14px 3px rgba(51, 240, 255, 0.82),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 7px 14px rgba(14, 24, 34, 0.55);
+}
+
+/* Gargoyle Magenta/Purple-and-Gold Collector Card Variant (104px so Villain + 3 Gargoyles fit unclipped with >160px clearance!) */
+.cs-collector-card.is-gargoyle {
+  width: 104px;
+  height: 135px;
+  padding: 2.5px;
+  background: linear-gradient(180deg, #f3cd72 0%, #c96bd8 45%, #8d2f99 78%, #b97c24 100%);
+  border-color: #231426;
+}
+
+/* Mage Pocket Summon Card ("Astral Aid [F]") */
+.cs-collector-card.is-astral-aid {
+  width: 112px;
+  height: 138px;
+  background: linear-gradient(180deg, #fff2a6 0%, #52d7ff 45%, #1d75c9 78%, #d4972a 100%);
+  border-color: #162b45;
+}
+
+.cs-collector-card.is-astral-aid.is-ready {
+  border-color: #b5fcff;
+  animation: csAstralPulse 2.1s ease-in-out infinite;
+}
+
+@keyframes csAstralPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2px #52e8ff,
+      0 0 13px 2px rgba(82, 232, 255, 0.72),
+      0 5px 12px rgba(14, 22, 34, 0.48);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2.5px #ffe57f,
+      0 0 19px 4px rgba(255, 222, 98, 0.88),
+      0 6px 14px rgba(14, 22, 34, 0.52);
+  }
+}
+
+.cs-collector-card.is-astral-aid.is-spent {
+  opacity: 0.62;
+  filter: saturate(0.45);
+  box-shadow: 0 4px 9px rgba(16, 12, 8, 0.4);
+}
+
+/* Shadow Rogue Relentless Hunter Villain Card */
+.cs-collector-card.is-rogue-villain {
+  width: 112px;
+  height: 138px;
+  padding: 2.5px;
+  background: linear-gradient(180deg, #ffd275 0%, #e02446 42%, #7a0d22 78%, #b8781f 100%);
+  border-color: #2b0810;
+  box-shadow:
+    0 0 0 1.5px #ff3355,
+    0 0 12px 2px rgba(255, 36, 66, 0.56),
+    0 5px 12px rgba(20, 8, 12, 0.52);
+}
+
+.cs-collector-card.is-rogue-villain .cs-card-title {
+  font-size: 9.8px;
+  letter-spacing: -0.2px;
+}
+
+.cs-collector-card.is-rogue-villain.is-frozen {
+  background: linear-gradient(180deg, #d6fcff 0%, #3ecfff 45%, #195d94 80%, #89d8ff 100%);
+  border-color: #9ef8ff;
+  box-shadow:
+    0 0 0 2px #5ce6ff,
+    0 0 15px 3px rgba(92, 230, 255, 0.85),
+    0 5px 12px rgba(10, 22, 34, 0.5);
+}
+
+.cs-collector-card.is-rogue-villain.is-sun-blinded {
+  background: linear-gradient(180deg, #fff9c4 0%, #ffbe3b 48%, #b86811 82%, #ffe074 100%);
+  border-color: #fff3a1;
+  box-shadow:
+    0 0 0 2px #ffd24c,
+    0 0 15px 3px rgba(255, 208, 68, 0.85),
+    0 5px 12px rgba(24, 16, 8, 0.5);
+}
+
+.cs-collector-card.is-rogue-villain.is-banished {
+  opacity: 0.58;
+  filter: saturate(0.45);
+  box-shadow: 0 4px 10px rgba(18, 12, 8, 0.38);
+}
+
+.cs-collector-card.is-rogue-villain .cs-card-inner {
+  background: #2b0c14;
+  border-color: #1f070d;
+}
+
+.cs-collector-card.is-rogue-villain .cs-card-header {
+  background: linear-gradient(180deg, #7d1529 0%, #450a16 100%);
+  border-bottom-color: #ff9c47;
+}
+
+.cs-collector-card.is-rogue-villain.is-frozen .cs-card-header {
+  background: linear-gradient(180deg, #1e628a 0%, #123b57 100%);
+  border-bottom-color: #9ef8ff;
+}
+
+.cs-collector-card.is-rogue-villain .cs-card-art-wrap {
+  background: radial-gradient(circle at 50% 28%, #ff6b84 0%, #7d1328 56%, #290710 100%);
+}
+
+.cs-collector-card.is-rogue-villain.is-frozen .cs-card-art-wrap {
+  background: radial-gradient(circle at 50% 28%, #b8fbff 0%, #247ba8 56%, #0f2c47 100%);
+}
+
+.cs-collector-card.is-rogue-villain.is-sun-blinded .cs-card-art-wrap {
+  background: radial-gradient(circle at 50% 28%, #fffbe0 0%, #eb9d28 56%, #592e0c 100%);
+}
+
+.cs-collector-card.is-rogue-villain .cs-card-desc {
+  height: 33px;
+  background: linear-gradient(180deg, #4f111e 0%, #2e0911 100%);
+  flex-direction: column;
+  gap: 1.5px;
+}
+
+.cs-collector-card.is-rogue-villain.is-frozen .cs-card-desc {
+  background: linear-gradient(180deg, #1b4d6e 0%, #102e45 100%);
+}
+
+/* Floating Role / Summon Pill Above Collector Cards */
+.cs-card-floating-tag {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1.5px 6.5px;
+  border-radius: 8px;
+  font-size: 7.8px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border: 1.5px solid #24170f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.48);
+  pointer-events: none;
+  z-index: 6;
+}
+
+.cs-card-floating-tag.is-knight {
+  background: linear-gradient(180deg, #5ef2ff 0%, #178eb5 100%);
+  border-color: #cffbff;
+  color: #ffffff;
+}
+
+.cs-card-floating-tag.is-astral {
+  background: linear-gradient(180deg, #ffe985 0%, #e5961e 100%);
+  border-color: #fff8c9;
+  color: #fffdf5;
+}
+
+.cs-card-floating-tag.is-villain {
+  background: linear-gradient(180deg, #ff4f6a 0%, #a81128 100%);
+  border-color: #ffb8c3;
+  color: #fff7f8;
+}
+
+.cs-card-floating-tag.is-blinded {
+  background: linear-gradient(180deg, #fff099 0%, #d98816 100%);
+  border-color: #fff9d2;
+  color: #ffffff;
+}
+
+.cs-card-floating-tag.is-spent {
+  background: linear-gradient(180deg, #596373 0%, #363d47 100%);
+  border-color: #9aa5b5;
+  color: #dce4f0;
+}
+
+.cs-card-desc {
+  flex-direction: column;
+  gap: 1.5px;
+}
+
+.cs-card-desc-main {
+  font-size: 9px;
+  font-weight: 900;
+  color: #fff8e6;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.cs-card-desc-main.is-astral-ready {
+  color: #ffe875;
+}
+
+.cs-card-desc-main.is-astral-spent {
+  color: #c5d1e0;
+}
+
+.cs-card-desc-sub {
+  font-size: 7.8px;
+  font-weight: 700;
+  color: #e6d5b8;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.cs-collector-card.is-gargoyle.is-sunstruck {
+  border-color: #fff099;
+  box-shadow:
+    0 0 0 2px #ffc83b,
+    0 0 14px 3px rgba(255, 196, 46, 0.82),
+    0 5px 12px rgba(20, 14, 9, 0.48);
+}
+
+.cs-collector-card.is-gargoyle.is-pulsing {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 0 0 2.5px #ff44dd,
+    0 0 16px 4px rgba(255, 51, 204, 0.85);
+}
+
+.cs-collector-card.is-gargoyle.is-defeated {
+  opacity: 0.64;
+  filter: saturate(0.55);
+}
+
+.cs-card-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 6.5px;
+  border: 1.5px solid #261a12;
+  background: #382619;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.cs-collector-card.is-gargoyle .cs-card-inner {
+  background: #331c38;
+  border-color: #221126;
+}
+
+/* 1. Card Top Nameplate Bar */
+.cs-card-header {
+  height: 21px;
+  padding: 0 2.5px;
+  background: linear-gradient(180deg, #5d4330 0%, #3d2a1d 100%);
+  border-bottom: 1.5px solid #c99238;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.cs-collector-card.theme-mage .cs-card-header {
+  background: linear-gradient(180deg, #275873 0%, #183a4d 100%);
+}
+
+.cs-collector-card.theme-rogue .cs-card-header {
+  background: linear-gradient(180deg, #2f5c2b 0%, #1d3b1a 100%);
+}
+
+.cs-collector-card.is-gargoyle .cs-card-header {
+  padding: 0 1.5px;
+  gap: 1px;
+  background: linear-gradient(180deg, #682973 0%, #43184d 100%);
+  border-bottom-color: #e0983b;
+}
+
+.cs-card-class-gem {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid #f4c862;
+  background: radial-gradient(circle at 35% 30%, #6d7f96 0%, #2b3542 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cs-collector-card.is-gargoyle .cs-card-class-gem {
+  width: 10px;
+  height: 10px;
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 30%, #d44ef0 0%, #651b78 100%);
+}
+
+.cs-collector-card.is-gargoyle .cs-card-class-gem svg {
+  width: 7px;
+  height: 7px;
+}
+
+.cs-card-title {
+  font-size: 10.8px;
+  font-weight: 900;
+  color: #fff9eb;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: center;
+  flex: 1;
+}
+
+.cs-collector-card.is-gargoyle .cs-card-title {
+  font-family: 'Trebuchet MS', 'Arial Narrow', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.cs-card-coin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff099 0%, #e09c28 70%, #9e6410 100%);
+  border: 1px solid #2b1c10;
+  color: #3a230b;
+  font-size: 8px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cs-collector-card.is-gargoyle .cs-card-coin {
+  width: 10px;
+  height: 10px;
+  font-size: 7px;
+}
+
+/* 2. Card Center Chibi Portrait Window (True 1:1 Un-Squashed Aspect!) */
+.cs-card-art-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 68px;
+  overflow: hidden;
+}
+
+/* Distinct Collector Backdrops Matching Master Reference Image */
+.cs-collector-card.theme-warrior .cs-card-art-wrap {
+  background:
+    radial-gradient(circle at 50% 28%, #fffbe6 0%, #f6db96 52%, #c58c38 100%);
+}
+
+.cs-collector-card.theme-mage .cs-card-art-wrap {
+  background:
+    radial-gradient(circle at 50% 28%, #63d4f2 0%, #1f749c 58%, #103e59 100%);
+}
+
+.cs-collector-card.theme-rogue .cs-card-art-wrap {
+  background:
+    radial-gradient(circle at 50% 28%, #7bd656 0%, #337c2a 58%, #194216 100%);
+}
+
+/* Warm Sunlit Sanctuary Arch Glow Behind Stone Gargoyle (Matches Master Reference!) */
+.cs-collector-card.is-gargoyle .cs-card-art-wrap {
+  background:
+    radial-gradient(circle at 50% 24%, #fae0aa 0%, #c68e6e 40%, #683873 76%, #34193f 100%);
+}
+
+.cs-collector-card.is-gargoyle.is-sunstruck .cs-card-art-wrap {
+  background:
+    radial-gradient(circle at 50% 34%, #fff8c8 0%, #f5b236 52%, #7d3568 100%);
+}
+
+.cs-card-portrait {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  width: 98%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  display: block;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+/* Left-Edge & Right-Edge Legacy RPG/AP Stat Orbs Hidden so Collector Portraits Shine Cleanly */
+.cs-card-stats-left,
+.cs-card-stats-right {
+  display: none;
+}
+
+/* Ornate Divider Seam with Mini Element Gems */
+.cs-card-seam {
+  height: 5px;
+  background: linear-gradient(90deg, #8c5c23 0%, #e7b049 50%, #8c5c23 100%);
+  border-top: 1px solid #261910;
+  border-bottom: 1px solid #261910;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.cs-seam-pip {
+  width: 4.5px;
+  height: 4.5px;
+  border-radius: 50%;
+  border: 1px solid #24160e;
+  background: #5ce6ff;
+}
+
+.cs-seam-pip.pip-warm {
+  background: #ff7647;
+}
+
+/* 3. Bottom Framed Parchment / Carved Wood Description Box */
+.cs-card-desc {
+  height: 34px;
+  padding: 2px 3.5px;
+  background: linear-gradient(180deg, #533925 0%, #392618 100%);
+  box-shadow: inset 0 1px 3px rgba(15, 9, 5, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 8.4px;
+  font-weight: 700;
+  line-height: 1.14;
+  color: #fff4dc;
+  flex-shrink: 0;
+}
+
+.cs-collector-card.is-gargoyle .cs-card-desc {
+  height: 33px;
+  background: linear-gradient(180deg, #4b234d 0%, #311535 100%);
+  flex-direction: column;
+  gap: 1.5px;
+}
+
+.cs-gargoyle-status-main {
+  font-size: 9px;
+  font-weight: 900;
+  color: #ffe8fb;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.cs-collector-card.is-gargoyle.is-sunstruck .cs-gargoyle-status-main {
+  color: #ffe66d;
+}
+
+.cs-collector-card.is-gargoyle.is-defeated .cs-gargoyle-status-main {
+  color: #a8f0a5;
+}
+
+.cs-gargoyle-status-sub {
+  font-size: 8px;
+  font-weight: 700;
+  color: #dec4e3;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.cs-gargoyle-extra-pill {
+  position: absolute;
+  top: -21px;
+  right: 2px;
+  padding: 2px 8px;
+  border-radius: 9px;
+  background: rgba(54, 28, 62, 0.92);
+  border: 1.5px solid #e0983b;
+  font-size: 9px;
+  font-weight: 800;
+  color: #ffe9f8;
+}
+
+/* ==========================================================================
+   ZONE 6: BOTTOM-CENTER TACTILE BRASS-AND-STONE ACTION BAR
+   height: 34px, bottom: 10px, strictly clear of Hero & Gargoyle decks!
+   ========================================================================== */
+.cs-action-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 35px;
+  padding: 3px 6px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #4d596b 0%, #343d4b 58%, #28303b 100%);
+  border: 2px solid #e5a93b;
+  outline: 2px solid #241912;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 200, 0.38),
+    0 5px 12px rgba(18, 13, 9, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  z-index: 25;
+}
+
+.cs-act-btn {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1.5px solid #b98939;
+  background: linear-gradient(180deg, #635344 0%, #46392e 65%, #382d24 100%);
+  color: #fff5df;
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 190, 0.3),
+    0 2px 0 #1f1610;
+  transition: transform 0.08s ease, filter 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.cs-act-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  border-color: #f3c662;
+}
+
+.cs-act-btn:active:not(:disabled) {
+  transform: translateY(1.5px);
+  box-shadow: 0 0.5px 0 #1f1610;
+}
+
+.cs-act-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.cs-act-btn.is-active {
+  background: linear-gradient(180deg, #2d7a9c 0%, #1c5570 65%, #153f54 100%);
+  border-color: #6bf4ff;
+  color: #ffffff;
+  box-shadow:
+    0 0 8px rgba(51, 240, 255, 0.55),
+    inset 0 1px 0 rgba(200, 252, 255, 0.55),
+    0 2px 0 #102633;
+}
+
+.cs-act-btn.is-util {
+  background: linear-gradient(180deg, #4b5769 0%, #343e4d 100%);
+  border-color: #9baabf;
+  padding: 0 9px;
+}
+
+.cs-act-btn.is-hint-primary {
+  padding: 0 11px;
+  background: linear-gradient(180deg, #ffe278 0%, #f0a829 52%, #c67b12 100%);
+  border: 1.8px solid #fff3b2;
+  color: #fffdf5;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 235, 0.85),
+    0 2px 0 #4d2c06,
+    0 0 10px rgba(245, 174, 41, 0.42);
+}
+
+.cs-act-btn.is-hint-primary:hover {
+  filter: brightness(1.08);
+}
+
+.cs-bar-sep {
+  width: 1.5px;
+  height: 15px;
+  background: rgba(229, 169, 59, 0.42);
+  margin: 0 1.5px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   ZONE 7: COMPACT VICTORY BANNER (<= 9% Viewport Area, Board Shines Behind!)
+   ========================================================================== */
+.cs-victory-banner {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 382px;
+  padding: 13px 18px 14px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 244, 198, 0.22) 0%, transparent 70%),
+    linear-gradient(180deg, #5c4028 0%, #3d2919 100%);
+  border: 3px solid #f5be49;
+  outline: 2.5px solid #24170f;
+  box-shadow:
+    0 0 28px rgba(255, 204, 72, 0.55),
+    inset 0 1.5px 0 rgba(255, 246, 205, 0.65),
+    0 12px 28px rgba(18, 12, 7, 0.62);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  z-index: 35;
+}
+
+.cs-victory-banner.is-open {
+  display: flex;
+  animation: csVictoryPop 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes csVictoryPop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.cs-victory-kicker {
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffd96a;
+}
+
+.cs-victory-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fffaf0;
+  line-height: 1.1;
+}
+
+.cs-victory-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.cs-victory-meta {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f6e5c4;
+}
+
+.cs-victory-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.cs-vic-btn {
+  height: 33px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 2px solid #d49b38;
+  background: linear-gradient(180deg, #566478 0%, #384352 100%);
+  color: #fff8eb;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 2.5px 0 #1d1510;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-vic-btn.is-primary {
+  background: linear-gradient(180deg, #ffe580 0%, #efa728 55%, #c47a12 100%);
+  border-color: #fff5ba;
+  color: #fffef8;
+  box-shadow:
+    0 2.5px 0 #4d2c06,
+    0 0 12px rgba(255, 200, 64, 0.5);
+}
+
+.cs-vic-btn:hover {
+  filter: brightness(1.08);
+}
+
+.cs-vic-btn:active {
+  transform: translateY(1.5px);
+}
+
+.cs-vic-btn.is-undo-primary {
+  background: linear-gradient(180deg, #7ef6ff 0%, #219ec4 55%, #13688a 100%);
+  border-color: #d4fcff;
+  color: #ffffff;
+  box-shadow:
+    0 2.5px 0 #0d3547,
+    0 0 12px rgba(82, 232, 255, 0.55);
+}
+
+/* ==========================================================================
+   ZONE 7B: COMPACT SHADOW AMBUSH DEFEAT BANNER (Board Remains Visible Behind!)
+   ========================================================================== */
+.cs-ambush-banner {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 394px;
+  padding: 13px 18px 14px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 92, 118, 0.24) 0%, transparent 72%),
+    linear-gradient(180deg, #591522 0%, #330b13 100%);
+  border: 3px solid #ff4763;
+  outline: 2.5px solid #1f070c;
+  box-shadow:
+    0 0 28px rgba(255, 42, 75, 0.58),
+    inset 0 1.5px 0 rgba(255, 198, 208, 0.45),
+    0 12px 28px rgba(16, 6, 9, 0.68);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  z-index: 36;
+}
+
+.cs-ambush-banner.is-open {
+  display: flex;
+  animation: csVictoryPop 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.cs-ambush-kicker {
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ff8598;
+}
+
+.cs-ambush-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #fff5f7;
+  line-height: 1.15;
+}
+
+.cs-ambush-meta {
+  font-size: 11.2px;
+  font-weight: 700;
+  color: #f7d5dc;
+  line-height: 1.3;
+}
+
+/* ==========================================================================
+   ZONE 8: OPTION 2 ("THE SUNBEAM SHOWDOWN") LIVE 3D BOARD WELCOME SCREEN
+   Layered directly over the live sunlit 3D floating island!
+   ========================================================================== */
+.cs-home-btn {
+  width: 23px;
+  height: 19px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1.5px solid #c99236;
+  background: linear-gradient(180deg, #6b563e 0%, #453525 100%);
+  color: #fff6df;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1.5px 0 #1f1712;
+  transition: transform 0.08s ease, filter 0.12s ease;
+}
+
+.cs-home-btn:hover {
+  filter: brightness(1.14);
+  border-color: #ffe07d;
+}
+
+.cs-home-btn:active {
+  transform: translateY(1px);
+}
+
+.cs-welcome-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.025);
+  transition:
+    opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0.36s ease;
+}
+
+.cs-welcome-screen.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+/* Subtle warm sunbeam halo behind logo only — center 3D island stays 100% crystal clear */
+.cs-welcome-halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 34% at 50% 18%, rgba(255, 246, 200, 0.26) 0%, rgba(255, 212, 96, 0.07) 58%, transparent 100%),
+    linear-gradient(180deg, rgba(16, 42, 74, 0.12) 0%, transparent 26%, transparent 80%, rgba(20, 14, 9, 0.22) 100%);
+}
+
+/* Top-Center 3D Carved Stone & Brass Logo Crest + Attached Game Pitch Scroll */
+.cs-welcome-logo-wrap {
+  position: absolute;
+  top: clamp(8px, 1.6vh, 18px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 63;
+}
+
+.cs-welcome-logo {
+  display: block;
+  height: clamp(184px, 36.5vh, 272px);
+  width: auto;
+  max-width: 90vw;
+  filter:
+    drop-shadow(0 10px 20px rgba(24, 15, 8, 0.48))
+    drop-shadow(0 0 22px rgba(255, 224, 108, 0.28));
+  animation: csWelcomeLogoFloat 4.4s ease-in-out infinite;
+}
+
+@keyframes csWelcomeLogoFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Center Stacked Tactile Stone Slab Buttons (PLAY + 4 SKY ISLANDS) */
+.cs-welcome-menu {
+  position: absolute;
+  top: clamp(204px, 41.2vh, 306px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.1vh, 10px);
+  z-index: 65;
+}
+
+.cs-welcome-slab-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  filter: drop-shadow(0 8px 15px rgba(20, 13, 8, 0.50));
+  transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), filter 0.14s ease;
+}
+
+.cs-welcome-slab-btn.is-play {
+  animation: csPlayPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes csPlayPulse {
+  0%, 100% {
+    filter:
+      drop-shadow(0 8px 15px rgba(20, 13, 8, 0.50))
+      drop-shadow(0 0 10px rgba(255, 214, 88, 0.22));
+  }
+  50% {
+    filter:
+      drop-shadow(0 10px 18px rgba(20, 13, 8, 0.54))
+      drop-shadow(0 0 20px rgba(255, 222, 104, 0.52));
+  }
+}
+
+.cs-welcome-slab-btn:hover {
+  animation: none;
+  transform: translateY(-3px) scale(1.04);
+  filter:
+    brightness(1.06)
+    drop-shadow(0 12px 18px rgba(20, 13, 8, 0.56))
+    drop-shadow(0 0 18px rgba(255, 224, 104, 0.55));
+}
+
+.cs-welcome-slab-btn:active {
+  animation: none;
+  transform: translateY(2px) scale(0.985);
+}
+
+.cs-welcome-slab-btn.is-play img {
+  height: clamp(66px, 12.2vh, 90px);
+  width: auto;
+  display: block;
+  pointer-events: none;
+}
+
+.cs-welcome-slab-btn.is-islands img {
+  height: clamp(54px, 9.8vh, 72px);
+  width: auto;
+  display: block;
+  pointer-events: none;
+}
+
+/* Flanking Option 2 Mascots (Heroic Knight, Shadow Rogue & Floating Astral Mage) */
+.cs-welcome-mascot {
+  position: absolute;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  outline: none;
+  z-index: 64;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), filter 0.18s ease;
+}
+
+.cs-welcome-mascot img {
+  display: block;
+  width: auto;
+  pointer-events: none;
+}
+
+.cs-welcome-mascot.is-warrior {
+  right: calc(50% + clamp(154px, 15vw, 206px));
+  bottom: clamp(98px, 16.5vh, 124px);
+}
+
+.cs-welcome-mascot.is-warrior img {
+  height: clamp(160px, 31vh, 232px);
+  filter:
+    drop-shadow(0 10px 18px rgba(18, 12, 8, 0.48))
+    drop-shadow(0 0 18px rgba(72, 240, 255, 0.30));
+}
+
+.cs-welcome-mascot.is-rogue {
+  left: calc(50% + clamp(154px, 15vw, 206px));
+  bottom: clamp(98px, 16.5vh, 124px);
+}
+
+.cs-welcome-mascot.is-rogue img {
+  height: clamp(156px, 30.2vh, 226px);
+  filter:
+    drop-shadow(0 10px 18px rgba(18, 12, 8, 0.50))
+    drop-shadow(0 0 18px rgba(255, 58, 84, 0.30));
+}
+
+.cs-welcome-mascot.is-mage {
+  left: calc(50% + clamp(210px, 21.2vw, 278px));
+  top: clamp(72px, 12.6vh, 104px);
+  animation: csMageHover 3.5s ease-in-out infinite;
+}
+
+.cs-welcome-mascot.is-mage img {
+  height: clamp(134px, 25vh, 188px);
+  filter:
+    drop-shadow(0 10px 16px rgba(18, 12, 8, 0.42))
+    drop-shadow(0 0 20px rgba(255, 232, 124, 0.46));
+}
+
+@keyframes csMageHover {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+.cs-welcome-mascot:hover {
+  transform: translateY(-4px) scale(1.045);
+  filter: brightness(1.06);
+}
+
+.cs-welcome-mascot.is-mage:hover {
+  animation-play-state: paused;
+  transform: translateY(-6px) scale(1.05);
+}
+
+/* Bottom Row of 4 Painted Stone Cubes (Music · Stars · Guide · Island Gear) */
+.cs-welcome-cubes {
+  position: absolute;
+  bottom: clamp(12px, 2.4vh, 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.4vw, 18px);
+  z-index: 65;
+}
+
+.cs-welcome-cube-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  filter: drop-shadow(0 6px 12px rgba(20, 13, 8, 0.50));
+  transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), filter 0.14s ease;
+}
+
+.cs-welcome-cube-btn img {
+  height: clamp(60px, 11vh, 82px);
+  width: auto;
+  display: block;
+  pointer-events: none;
+  transition: filter 0.15s ease;
+}
+
+.cs-welcome-cube-btn:hover {
+  transform: translateY(-4px) scale(1.07);
+  filter:
+    brightness(1.07)
+    drop-shadow(0 10px 16px rgba(20, 13, 8, 0.56))
+    drop-shadow(0 0 12px rgba(255, 220, 102, 0.38));
+}
+
+.cs-welcome-cube-btn:active {
+  transform: translateY(2px) scale(0.96);
+}
+
+.cs-welcome-cube-btn.is-muted-cube img {
+  filter: saturate(0.45) brightness(0.84);
+}
+
+.cs-cube-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -4px;
+  padding: 1.5px 6px;
+  border-radius: 8px;
+  font-size: 8.8px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  background: linear-gradient(180deg, #ffe682 0%, #df961d 100%);
+  border: 1.5px solid #24170f;
+  color: #fffef8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.48);
+  pointer-events: none;
+}
+
+.cs-cube-badge.is-off {
+  background: linear-gradient(180deg, #df5348 0%, #8f221b 100%);
+  color: #fff2f0;
+}
+
+.cs-cube-badge.is-cyan {
+  background: linear-gradient(180deg, #6bf2ff 0%, #1685ad 100%);
+  color: #ffffff;
+}
+
+/* Carved Sandstone & Brass Drawer Modal (Sky Islands / How to Play / Par Stars) */
+.cs-welcome-drawer {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 92vw);
+  padding: 16px 20px 18px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 244, 198, 0.20) 0%, transparent 72%),
+    linear-gradient(180deg, #5c4028 0%, #3b2717 100%);
+  border: 3px solid #f5be49;
+  outline: 2.5px solid #24170f;
+  box-shadow:
+    0 0 32px rgba(255, 204, 72, 0.42),
+    inset 0 1.5px 0 rgba(255, 246, 205, 0.62),
+    0 18px 38px rgba(14, 9, 5, 0.72);
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+  z-index: 72;
+}
+
+.cs-welcome-drawer.is-open {
+  display: flex;
+  animation: csDrawerPop 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes csDrawerPop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.cs-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid rgba(245, 190, 73, 0.36);
+}
+
+.cs-drawer-title {
+  font-size: 16.5px;
+  font-weight: 900;
+  color: #ffe896;
+  letter-spacing: 0.02em;
+}
+
+.cs-drawer-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid #d49b38;
+  background: linear-gradient(180deg, #694b32 0%, #442f1e 100%);
+  color: #fff6e0;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 #1f140c;
+}
+
+.cs-drawer-close:hover {
+  filter: brightness(1.12);
+  border-color: #ffe280;
+}
+
+.cs-islands-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.cs-island-card {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #c99238;
+  background: linear-gradient(180deg, #4b3523 0%, #332215 100%);
+  color: #fff8ea;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 195, 0.25),
+    0 3px 0 #1e130b;
+  transition: transform 0.1s ease, border-color 0.12s ease, filter 0.12s ease;
+}
+
+.cs-island-card:hover {
+  transform: translateY(-2px);
+  border-color: #ffe484;
+  filter: brightness(1.08);
+}
+
+.cs-island-card.is-current {
+  border-color: #7ef9ff;
+  box-shadow:
+    0 0 0 1.5px #33f0ff,
+    0 3px 0 #102430;
+}
+
+.cs-island-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cs-island-tag {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffd666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cs-island-stars {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ffd954;
+}
+
+.cs-island-name {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #fffaf0;
+}
+
+.cs-island-sub {
+  font-size: 10.8px;
+  font-weight: 700;
+  color: #e4d1b3;
+  line-height: 1.25;
+}
+
+.cs-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-guide-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  background: rgba(34, 22, 13, 0.55);
+  border: 1.5px solid rgba(229, 169, 59, 0.38);
+}
+
+.cs-guide-row.is-highlight {
+  border-color: #7ef9ff;
+  background: rgba(24, 52, 72, 0.52);
+}
+
+.cs-guide-icon {
+  font-size: 20px;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+.cs-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-guide-head {
+  font-size: 12.8px;
+  font-weight: 900;
+  color: #ffe898;
+}
+
+.cs-guide-desc {
+  font-size: 11.2px;
+  font-weight: 700;
+  color: #f3e4cb;
+  line-height: 1.32;
+}
+
+.cs-drawer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* ==========================================================================
+   RESPONSIVE SAFETY (Smaller Windows < 1180px & Mobile)
+   ========================================================================== */
+@media (max-width: 960px) {
+  .cs-welcome-mascot.is-warrior {
+    right: calc(50% + 128px);
+  }
+  .cs-welcome-mascot.is-rogue {
+    left: calc(50% + 128px);
+  }
+  .cs-welcome-mascot.is-mage {
+    left: calc(50% + 158px);
+  }
+  .cs-welcome-mascot.is-warrior img,
+  .cs-welcome-mascot.is-rogue img {
+    height: clamp(120px, 23vh, 175px);
+  }
+  .cs-welcome-mascot.is-mage img {
+    height: clamp(104px, 19vh, 145px);
+  }
+}
+
+@media (max-width: 680px) {
+  .cs-welcome-mascot.is-warrior,
+  .cs-welcome-mascot.is-rogue {
+    display: none;
+  }
+  .cs-islands-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1180px) {
+  .cs-collector-card,
+  .cs-collector-card.is-astral-aid,
+  .cs-collector-card.is-rogue-villain {
+    width: 92px;
+    height: 138px;
+  }
+  .cs-collector-card.is-gargoyle {
+    width: 86px;
+    height: 136px;
+  }
+  .cs-act-btn {
+    padding: 0 4.5px;
+    font-size: 8.4px;
+  }
+}
